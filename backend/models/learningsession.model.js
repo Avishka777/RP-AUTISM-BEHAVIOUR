@@ -57,6 +57,26 @@ const LearningSessionSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  currentMood: {
+    type: String,
+    default: null,
+  },
+  parentSatisfaction: {
+    type: Number,
+    default: null,
+  },
+  engagementLevel: {
+    type: Number,
+    default: null,
+  },
+  completedTasks: {
+    type: Number,
+    default: 0,
+  },
+  correctInFirstAttempt: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

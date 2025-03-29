@@ -40,7 +40,8 @@ exports.addLearningInstruction = async (req, res) => {
 exports.finishLearningSession = async (req, res) => {
   try {
     const sessionId = req.params.id;
-    const { finishedSession } = req.body;
+    // Extract additional details from the request body
+    const { finishedSession, currentMood, parentSatisfaction, engagementLevel } = req.body;
     const session = await LearningSession.findById(sessionId);
     if (!session) {
       return res.status(404).json({ message: "Learning session not found" });
@@ -64,12 +65,25 @@ exports.finishLearningSession = async (req, res) => {
         ? totalTime / session.InstructinRecords.length
         : 0;
 
+    // Calculate completed tasks (count of instructions)
+    const completedTasks = session.InstructinRecords.length;
+
+    // Count correct answers on the first attempt (assuming isCorrect indicates that)
+    const correctInFirstAttempt = session.InstructinRecords.filter(
+      (record) => record.isCorrect === true
+    ).length;
+
     await session.save();
 
     res.status(200).json({
       session,
       totalTime,
       averageTime,
+      currentMood,
+      parentSatisfaction,
+      engagementLevel,
+      completedTasks,
+      correctInFirstAttempt,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
