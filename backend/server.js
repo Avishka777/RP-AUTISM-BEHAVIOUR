@@ -6,6 +6,7 @@ require("dotenv").config();
 
 // Import Routes
 const userRoute = require("./routers/user.router");
+const learningRoute = require("./routers/learningsession.router");
 
 // App Config
 const app = express();
@@ -24,6 +25,7 @@ app.use(bodyParser.json());
 
 // Routes
 app.use("/api/users", userRoute);
+app.use("/api/learning", learningRoute);
 
 // Server startup
 app.listen(PORT, () => {
