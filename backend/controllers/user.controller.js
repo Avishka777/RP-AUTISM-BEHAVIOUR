@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 // Register user
 exports.register = async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, email, password, age, gender } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -16,11 +16,13 @@ exports.register = async (req, res) => {
     // Hash password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Create new user with age and gender included
     const newUser = new User({
       fullName,
       email,
       password: hashedPassword,
+      age,
+      gender,
     });
 
     await newUser.save();
@@ -62,11 +64,7 @@ exports.login = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-      },
+      user,
     });
   } catch (error) {
     res.status(500).json({ message: "Error logging in", error: error.message });
@@ -76,7 +74,7 @@ exports.login = async (req, res) => {
 // Get user details
 exports.getUserDetails = async (req, res) => {
   try {
-    const userId = req.user.id; // Extracted from JWT
+    const userId = req.user.id;
 
     const user = await User.findById(userId).select("-password"); // Exclude password
 
@@ -95,13 +93,15 @@ exports.getUserDetails = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // Extracted from JWT
-    const { fullName, email, password, profilePicture } = req.body;
+    const userId = req.user.id;
+    const { fullName, email, password, profilePicture, age, gender } = req.body;
 
     const updates = {};
     if (fullName) updates.fullName = fullName;
     if (email) updates.email = email;
     if (profilePicture) updates.profilePicture = profilePicture;
+    if (age) updates.age = age;
+    if (gender) updates.gender = gender;
     if (password) updates.password = await bcrypt.hash(password, 10); // Hash new password
 
     const updatedUser = await User.findByIdAndUpdate(userId, updates, {

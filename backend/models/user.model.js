@@ -22,7 +22,13 @@ const userSchema = new Schema(
       type: String,
       default:
         "https://img.freepik.com/premium-vector/portrait-avatar-male-laughter-joy-smile-calmness-diversity-personage_147933-10329.jpg?w=740",
-    }
+    },
+    age: {
+      type: Number,
+    },
+    gender: {
+      type: String,
+    },
   },
   {
     timestamps: true,
