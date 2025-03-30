@@ -77,6 +77,10 @@ const LearningSessionSchema = new Schema({
     type: Number,
     default: 0,
   },
+  prediction: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

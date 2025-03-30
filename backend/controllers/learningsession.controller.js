@@ -1,4 +1,6 @@
 const LearningSession = require("../models/learningsession.model");
+const User = require("../models/user.model");
+const axios = require("axios");
 
 // Create a new learning session (user has logged in and selected a place)
 exports.createLearningSession = async (req, res) => {
@@ -36,13 +38,19 @@ exports.addLearningInstruction = async (req, res) => {
   }
 };
 
-// Finish the learning session and calculate total and average time
+// Finish the learning session and get the prediction
 exports.finishLearningSession = async (req, res) => {
   try {
     const sessionId = req.params.id;
-    // Extract additional details from the request body
-    const { finishedSession, currentMood, parentSatisfaction, engagementLevel } = req.body;
-    const session = await LearningSession.findById(sessionId);
+    const {
+      finishedSession,
+      currentMood,
+      parentSatisfaction,
+      engagementLevel,
+    } = req.body;
+
+    // Fetch the learning session
+    let session = await LearningSession.findById(sessionId);
     if (!session) {
       return res.status(404).json({ message: "Learning session not found" });
     }
@@ -52,10 +60,13 @@ exports.finishLearningSession = async (req, res) => {
       });
     }
 
-    // Mark the session as finished
+    // Update session details
     session.finishedSession = true;
+    session.currentMood = currentMood;
+    session.parentSatisfaction = parentSatisfaction;
+    session.engagementLevel = engagementLevel;
 
-    // Calculate total takenTime and average takenTime from all instructions
+    // Calculate total takenTime and average takenTime
     const totalTime = session.InstructinRecords.reduce(
       (acc, record) => acc + record.takenTime,
       0
@@ -65,14 +76,59 @@ exports.finishLearningSession = async (req, res) => {
         ? totalTime / session.InstructinRecords.length
         : 0;
 
-    // Calculate completed tasks (count of instructions)
+    // Calculate completed tasks and count of correct answers on first attempt
     const completedTasks = session.InstructinRecords.length;
-
-    // Count correct answers on the first attempt (assuming isCorrect indicates that)
     const correctInFirstAttempt = session.InstructinRecords.filter(
       (record) => record.isCorrect === true
     ).length;
 
+    // Update the session fields for tasks and correct attempts
+    session.completedTasks = completedTasks;
+    session.correctInFirstAttempt = correctInFirstAttempt;
+
+    // Get user details (Age and Gender) from the User model
+    const user = await User.findById(session.user);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Construct the payload for the prediction API
+    const predictPayload = {
+      Age: user.age || 0,
+      Gender: user.gender || "",
+      Current_Mood: currentMood,
+      Parent_Satisfaction: parentSatisfaction,
+      Engagement_Level: engagementLevel,
+      Completed_Tasks: completedTasks,
+      Time_Spent: totalTime,
+      Correct_in_First_Attempt: correctInFirstAttempt,
+    };
+
+    console.log("Prediction Payload: ", predictPayload);
+
+    // Call the prediction API with
+    let prediction;
+    try {
+      const predictResponse = await axios.post(
+        `${process.env.FLASH_BACKEND}/predict`,
+        predictPayload
+      );
+      prediction = predictResponse.data.prediction;
+      session.prediction = prediction;
+    } catch (axiosError) {
+      console.error(
+        "Prediction API error: ",
+        axiosError.response ? axiosError.response.data : axiosError.message
+      );
+      return res.status(500).json({
+        error: "Prediction API call failed",
+        details: axiosError.response
+          ? axiosError.response.data
+          : axiosError.message,
+      });
+    }
+
+    // Save the session with updated values and prediction
     await session.save();
 
     res.status(200).json({
@@ -84,6 +140,7 @@ exports.finishLearningSession = async (req, res) => {
       engagementLevel,
       completedTasks,
       correctInFirstAttempt,
+      prediction,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
