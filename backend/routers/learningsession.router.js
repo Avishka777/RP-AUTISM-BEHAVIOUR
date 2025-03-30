@@ -12,4 +12,7 @@ router.put("/instructions/:id",authenticateUser,learningSessionController.addLea
 // Finish the learning session 
 router.put("/finish/:id", authenticateUser, learningSessionController.finishLearningSession);
 
+// Get a single learning session by ID (with all details)
+router.get("/:id", authenticateUser, learningSessionController.getLearningSession);
+
 module.exports = router;

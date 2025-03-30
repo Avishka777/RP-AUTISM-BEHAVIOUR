@@ -146,3 +146,17 @@ exports.finishLearningSession = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Get a single learning session by its ID
+exports.getLearningSession = async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const session = await LearningSession.findById(sessionId).populate("user", "-password");
+    if (!session) {
+      return res.status(404).json({ message: "Learning session not found" });
+    }
+    res.status(200).json(session);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
