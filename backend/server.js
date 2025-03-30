@@ -7,6 +7,7 @@ require("dotenv").config();
 // Import Routes
 const userRoute = require("./routers/user.router");
 const learningRoute = require("./routers/learningsession.router");
+const emailRoute = require("./routers/email.router");
 
 // App Config
 const app = express();
@@ -26,6 +27,7 @@ app.use(bodyParser.json());
 // Routes
 app.use("/api/users", userRoute);
 app.use("/api/learning", learningRoute);
+app.use("/api/email", emailRoute);
 
 // Server startup
 app.listen(PORT, () => {
