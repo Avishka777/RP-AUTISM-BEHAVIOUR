@@ -41,7 +41,7 @@ Ensure that the following are installed on your machine:
 2. **Run the models:**
     ```bash
     - cd models
-    - pip install -r requirements.txt
+    - pip install fastapi uvicorn pydantic joblib pandas ultralytics pillow scikit-learn
     - uvicorn main:app --host 0.0.0.0 --port 8000
 
 3. **Environment Variables: Create a .env file in backend and add the following:**
@@ -49,9 +49,6 @@ Ensure that the following are installed on your machine:
    - PORT=5000
    - MONGO_URI=<your_mongodb_connection_string>
    - JWT_SECRET=<your_jwt_secret>
-   - AWS_ACCESS_KEY_ID=<your_aws_key>
-   - AWS_SECRET_ACCESS_KEY=<your_aws_secret>
-   - AWS_SECRET_REGION=<your_aws_region>
    - FLASH_BACKEND=<your_ml_api_endpoint>
 
 4. **Install dependencies for backend:**
