@@ -1,6 +1,84 @@
 const LearningSession = require("../models/learningsession.model");
 const User = require("../models/user.model");
 const axios = require("axios");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const FormData = require("form-data");
+
+// Set up multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
+// Handle file upload and object detection
+exports.uploadPhotoAndDetect = [
+  upload.single('photo'), 
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const filePath = req.file.path;
+      const formData = new FormData();
+      formData.append('file', fs.createReadStream(filePath), req.file.originalname);
+
+      console.log('Sending form data:', formData);
+
+      // Send image to external API for object detection
+      const response = await axios.post(`${process.env.FLASH_BACKEND}/detect_objects/`, formData, {
+        headers: {
+          ...formData.getHeaders(),  
+          'accept': 'application/json',
+        },
+      });
+
+      // Get the detected objects from the response
+      const detectedObjects = response.data.detected_objects;
+
+      // Filter detected objects with confidence > 0.5
+      const filteredObjects = detectedObjects.filter(obj => obj.confidence > 0.5);
+
+      // Use a Set to keep track of the unique class names
+      const uniqueClasses = new Set();
+
+      // Filter out duplicates by class (only keep the first occurrence of each class)
+      const uniqueObjects = filteredObjects
+        .filter(obj => {
+          if (!uniqueClasses.has(obj.class)) {
+            uniqueClasses.add(obj.class);
+            return true;
+          }
+          return false;
+        })
+        // Remove bbox from the final response
+        .map(obj => {
+          const { bbox, ...rest } = obj; 
+          return rest;  
+        });
+
+      // Return the final unique objects with confidence > 0.5 and only one object per class
+      res.status(200).json({ detectedObjects: uniqueObjects });
+      
+    } catch (error) {
+      console.error('Error during external API request:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+];
 
 // Create a new learning session (user has logged in and selected a place)
 exports.createLearningSession = async (req, res) => {

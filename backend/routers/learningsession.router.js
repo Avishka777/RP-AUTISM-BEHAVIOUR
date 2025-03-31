@@ -15,4 +15,7 @@ router.put("/finish/:id", authenticateUser, learningSessionController.finishLear
 // Get a single learning session by ID (with all details)
 router.get("/:id", authenticateUser, learningSessionController.getLearningSession);
 
+// Route for uploading photo and getting detected objects
+router.post("/detect-objects", authenticateUser, learningSessionController.uploadPhotoAndDetect);
+
 module.exports = router;
