@@ -92,7 +92,42 @@ def predict(request: PredictionRequest):
         # Map numeric prediction back to string label
         pred_label = level_inverse_mapping.get(pred_numeric, "Unknown")
 
-        return {"prediction": pred_label}
+        # Define suggestions for each prediction level
+        suggestions_dict = {
+            "Very Low": [
+                "Increase the engagement level by introducing interactive and stimulating activities.",
+                "Offer shorter, more focused tasks to prevent frustration and increase the chances of success.",
+                "Improve mood by providing more positive reinforcement and recognizing small achievements.",
+                "Enhance parental involvement to boost satisfaction and ensure more consistent support for the child."
+            ],
+            "Low": [
+                "Provide visual aids and rewards to enhance motivation and engagement in tasks.",
+                "Adjust the complexity of tasks based on the child's performance to maintain interest and reduce frustration.",
+                "Offer emotional support by recognizing the child's feelings and providing calming strategies.",
+                "Increase communication with parents to better understand the child's needs and improve task completion."
+            ],
+            "Moderate": [
+                "Introduce challenges that are slightly above the child's current skill level to promote growth and confidence.",
+                "Incorporate teamwork or peer interactions to boost engagement and problem-solving skills.",
+                "Ensure that the child receives timely feedback on performance to encourage further improvement.",
+                "Encourage self-regulation techniques to help manage frustration and maintain focus."
+            ],
+            "High": [
+                "Provide more complex tasks that challenge the child's current abilities to foster growth and mastery.",
+                "Encourage independent problem-solving and decision-making to build confidence and autonomy.",
+                "Use positive reinforcement to sustain motivation and recognize progress toward mastery.",
+                "Offer opportunities for the child to mentor others, which could enhance leadership and organizational skills."
+            ],
+            "Very High": [
+                "Introduce advanced tasks and projects that allow the child to demonstrate their full capabilities.",
+                "Provide leadership opportunities, such as managing a group task or guiding peers in activities.",
+                "Offer opportunities for skill development in a specialized area (e.g., music, art, or technology) to foster expertise.",
+                "Promote self-reflection and goal-setting to help the child focus on future achievements and career paths."
+            ]
+        }
+
+        suggestions = suggestions_dict.get(pred_label, [])
+        return {"prediction": pred_label, "suggestions": suggestions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

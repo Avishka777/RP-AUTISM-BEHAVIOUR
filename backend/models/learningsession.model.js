@@ -81,6 +81,10 @@ const LearningSessionSchema = new Schema({
     type: String,
     default: null,
   },
+  suggestions: {
+    type: [String],
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,

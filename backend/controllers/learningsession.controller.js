@@ -9,55 +9,68 @@ const FormData = require("form-data");
 // Set up multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads/';
+    const uploadDir = "uploads/";
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir);
     }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
 });
 
 const upload = multer({ storage: storage });
 
 // Handle file upload and object detection
 exports.uploadPhotoAndDetect = [
-  upload.single('photo'), 
+  upload.single("photo"),
   async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded' });
+        return res.status(400).json({ message: "No file uploaded" });
       }
 
       const filePath = req.file.path;
       const formData = new FormData();
-      formData.append('file', fs.createReadStream(filePath), req.file.originalname);
+      formData.append(
+        "file",
+        fs.createReadStream(filePath),
+        req.file.originalname
+      );
 
-      console.log('Sending form data:', formData);
+      console.log("Sending form data:", formData);
 
       // Send image to external API for object detection
-      const response = await axios.post(`${process.env.FLASH_BACKEND}/detect_objects/`, formData, {
-        headers: {
-          ...formData.getHeaders(),  
-          'accept': 'application/json',
-        },
-      });
+      const response = await axios.post(
+        `${process.env.FLASH_BACKEND}/detect_objects/`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            accept: "application/json",
+          },
+        }
+      );
 
       // Get the detected objects from the response
       const detectedObjects = response.data.detected_objects;
 
       // Filter detected objects with confidence > 0.5
-      const filteredObjects = detectedObjects.filter(obj => obj.confidence > 0.5);
+      const filteredObjects = detectedObjects.filter(
+        (obj) => obj.confidence > 0.5
+      );
 
       // Use a Set to keep track of the unique class names
       const uniqueClasses = new Set();
 
       // Filter out duplicates by class (only keep the first occurrence of each class)
       const uniqueObjects = filteredObjects
-        .filter(obj => {
+        .filter((obj) => {
           if (!uniqueClasses.has(obj.class)) {
             uniqueClasses.add(obj.class);
             return true;
@@ -65,19 +78,18 @@ exports.uploadPhotoAndDetect = [
           return false;
         })
         // Remove bbox from the final response
-        .map(obj => {
-          const { bbox, ...rest } = obj; 
-          return rest;  
+        .map((obj) => {
+          const { bbox, ...rest } = obj;
+          return rest;
         });
 
       // Return the final unique objects with confidence > 0.5 and only one object per class
       res.status(200).json({ detectedObjects: uniqueObjects });
-      
     } catch (error) {
-      console.error('Error during external API request:', error);
+      console.error("Error during external API request:", error);
       res.status(500).json({ error: error.message });
     }
-  }
+  },
 ];
 
 // Create a new learning session (user has logged in and selected a place)
@@ -184,15 +196,17 @@ exports.finishLearningSession = async (req, res) => {
 
     console.log("Prediction Payload: ", predictPayload);
 
-    // Call the prediction API with
-    let prediction;
+    // Call the prediction API
+    let prediction, suggestions;
     try {
       const predictResponse = await axios.post(
         `${process.env.FLASH_BACKEND}/predict`,
         predictPayload
       );
       prediction = predictResponse.data.prediction;
+      suggestions = predictResponse.data.suggestions;
       session.prediction = prediction;
+      session.suggestions = suggestions;
     } catch (axiosError) {
       console.error(
         "Prediction API error: ",
@@ -206,7 +220,7 @@ exports.finishLearningSession = async (req, res) => {
       });
     }
 
-    // Save the session with updated values and prediction
+    // Save the session with updated values, prediction, and suggestions
     await session.save();
 
     res.status(200).json({
@@ -219,6 +233,7 @@ exports.finishLearningSession = async (req, res) => {
       completedTasks,
       correctInFirstAttempt,
       prediction,
+      suggestions,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -229,7 +244,10 @@ exports.finishLearningSession = async (req, res) => {
 exports.getLearningSession = async (req, res) => {
   try {
     const sessionId = req.params.id;
-    const session = await LearningSession.findById(sessionId).populate("user", "-password");
+    const session = await LearningSession.findById(sessionId).populate(
+      "user",
+      "-password"
+    );
     if (!session) {
       return res.status(404).json({ message: "Learning session not found" });
     }
