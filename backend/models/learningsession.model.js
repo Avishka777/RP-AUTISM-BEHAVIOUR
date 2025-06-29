@@ -1,10 +1,39 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+const emotionSnapshotSchema = new Schema(
+  {
+    emotion_type: {
+      type: String,
+      enum: ["Initial", "Middle", "Final"],
+      required: true,
+    },
+    emotion_percentages: {
+      Angry: { type: Number, default: 0 },
+      Disgust: { type: Number, default: 0 },
+      Fear: { type: Number, default: 0 },
+      Happy: { type: Number, default: 0 },
+      Sad: { type: Number, default: 0 },
+      Surprise: { type: Number, default: 0 },
+      Neutral: { type: Number, default: 0 },
+    },
+    dominant_emotion: {
+      type: String,
+      enum: ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"],
+      default: null,
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
 const learningInstructionSchema = new Schema(
   {
     instructioId: {
-      type: Number, 
+      type: Number,
       required: true,
     },
     quesition: {
@@ -51,6 +80,10 @@ const LearningSessionSchema = new Schema({
   },
   InstructinRecords: {
     type: [learningInstructionSchema],
+    default: [],
+  },
+  emotionSnapshots: {
+    type: [emotionSnapshotSchema],
     default: [],
   },
   finishedSession: {

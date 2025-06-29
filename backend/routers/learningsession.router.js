@@ -6,6 +6,9 @@ const learningSessionController = require("../controllers/learningsession.contro
 // Create a new learning session
 router.post("/", authenticateUser, learningSessionController.createLearningSession);
 
+// Add emotion snapshot to session
+router.post("/initial-emotion/:id", authenticateUser, learningSessionController.addEmotionSnapshot);
+
 // Append a new learning instruction
 router.put("/instructions/:id",authenticateUser,learningSessionController.addLearningInstruction);
 

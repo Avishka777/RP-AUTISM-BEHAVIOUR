@@ -26,6 +26,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+const videoUpload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === 'video' && file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed for emotion detection!'), false);
+    }
+  },
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB max
+}).single('video');
+
 // Handle file upload and object detection
 exports.uploadPhotoAndDetect = [
   upload.single("photo"),
@@ -108,6 +120,107 @@ exports.createLearningSession = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Add emotion snapshot to learning session
+exports.addEmotionSnapshot = [
+  (req, res, next) => {
+    videoUpload(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+      next();
+    });
+  },
+  async (req, res) => {
+    try {
+      const sessionId = req.params.id;
+      const { emotionType } = req.body; // Should be "Initial", "Middle", or "Final"
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No video file uploaded" });
+      }
+
+      // Validate emotion type
+      const validEmotionTypes = ["Initial", "Middle", "Final"];
+      if (!validEmotionTypes.includes(emotionType)) {
+        // Clean up uploaded file if validation fails
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error("Error deleting temp file:", err);
+        });
+        return res.status(400).json({
+          message:
+            "Invalid emotion type. Must be one of: Initial, Middle, Final",
+        });
+      }
+
+      const filePath = req.file.path;
+      const formData = new FormData();
+      formData.append(
+        "file",
+        fs.createReadStream(filePath),
+        req.file.originalname
+      );
+
+      // Send video to emotion detection API
+      const emotionResponse = await axios.post(
+        `${process.env.FLASH_BACKEND}/detect_emotion_video/`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            accept: "application/json",
+          },
+        }
+      );
+
+      // Create emotion snapshot object
+      const emotionSnapshot = {
+        emotion_type: emotionType,
+        emotion_percentages: emotionResponse.data.emotion_percentages,
+        dominant_emotion: emotionResponse.data.dominant_emotion,
+        timestamp: new Date(),
+      };
+
+      // Update the learning session
+      const session = await LearningSession.findByIdAndUpdate(
+        sessionId,
+        { $push: { emotionSnapshots: emotionSnapshot } },
+        { new: true }
+      );
+
+      if (!session) {
+        // Clean up uploaded file if session not found
+        fs.unlink(filePath, (err) => {
+          if (err) console.error("Error deleting temp file:", err);
+        });
+        return res.status(404).json({ message: "Learning session not found" });
+      }
+
+      // Clean up uploaded file after successful processing
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error deleting temp file:", err);
+      });
+
+      res.status(200).json({
+        message: "Emotion snapshot added successfully",
+        session,
+        emotionSnapshot,
+      });
+    } catch (error) {
+      console.error("Error processing emotion snapshot:", error);
+      // Clean up uploaded file if error occurs
+      if (req.file) {
+        fs.unlink(req.file.path, (err) => {
+          if (err) console.error("Error deleting temp file:", err);
+        });
+      }
+      res.status(500).json({
+        error: error.message,
+        details: error.response?.data || "No additional error details",
+      });
+    }
+  },
+];
 
 // Append a new learning instruction to the session (using PUT method)
 exports.addLearningInstruction = async (req, res) => {
