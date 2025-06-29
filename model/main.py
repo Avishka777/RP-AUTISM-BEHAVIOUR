@@ -247,39 +247,53 @@ async def detect_emotion_video(file: UploadFile = File(...)):
 
         # Process video frames
         cap = cv2.VideoCapture(temp_video_path)
+        
+        # Get video properties
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps
+        
+        # Calculate frames to process (first 5 seconds)
+        target_frames = 15
+        frames_to_process = min(int(fps * 5), total_frames)  # Max 5 seconds worth of frames
+        frame_interval = max(1, frames_to_process // target_frames)  # Ensure we get exactly 15 frames
+        
         emotions = []
-        frame_count = 0
-        max_frames = 100  # Limit frames to process for performance
+        processed_frames = 0
+        current_frame = 0
 
-        while cap.isOpened() and frame_count < max_frames:
+        while cap.isOpened() and processed_frames < target_frames and current_frame < frames_to_process:
+            # Set the frame position
+            cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
             ret, frame = cap.read()
+            
             if not ret:
                 break
 
-            # Process every nth frame (e.g., every 5th frame)
-            if frame_count % 5 == 0:
-                # Convert frame to PIL Image
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                pil_image = Image.fromarray(frame_rgb)
+            # Convert frame to PIL Image
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(frame_rgb)
 
-                # Convert to grayscale and resize
-                gray_image = pil_image.convert("L").resize((48, 48))
-                img_array = img_to_array(gray_image) / 255.0
-                img_array = np.expand_dims(img_array, axis=0)
+            # Convert to grayscale and resize
+            gray_image = pil_image.convert("L").resize((48, 48))
+            img_array = img_to_array(gray_image) / 255.0
+            img_array = np.expand_dims(img_array, axis=0)
 
-                # Predict emotion
-                prediction = emotion_model.predict(img_array)
-                predicted_index = int(np.argmax(prediction))
-                predicted_emotion = emotion_labels[predicted_index]
-                confidence = float(np.max(prediction))
+            # Predict emotion
+            prediction = emotion_model.predict(img_array)
+            predicted_index = int(np.argmax(prediction))
+            predicted_emotion = emotion_labels[predicted_index]
+            confidence = float(np.max(prediction))
 
-                emotions.append({
-                    "frame": frame_count,
-                    "emotion": predicted_emotion,
-                    "confidence": confidence
-                })
+            emotions.append({
+                "frame": current_frame,
+                "time": current_frame / fps,  # Time in seconds
+                "emotion": predicted_emotion,
+                "confidence": confidence
+            })
 
-            frame_count += 1
+            processed_frames += 1
+            current_frame += frame_interval
 
         cap.release()
         
@@ -292,14 +306,18 @@ async def detect_emotion_video(file: UploadFile = File(...)):
                 "percentage": (count / len(emotions)) * 100 if emotions else 0
             }
 
-        # Get dominant emotion (emotion with highest percentage)
+        # Get dominant emotion
         dominant_emotion = max(emotion_stats.items(), key=lambda x: x[1]["percentage"])[0] if emotions else None
 
         return {
-            "frame_analysis": emotions,
-            "statistics": emotion_stats,
+            "video_info": {
+                "original_duration": duration,
+                "processed_duration": min(5.0, duration),
+                "original_fps": fps,
+                "frames_analyzed": len(emotions)
+            },
+            "emotion_percentages": {k: v["percentage"] for k, v in emotion_stats.items()},
             "dominant_emotion": dominant_emotion,
-            "total_frames_processed": len(emotions)
         }
 
     except Exception as e:
