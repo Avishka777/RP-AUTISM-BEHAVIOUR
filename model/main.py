@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import joblib
 import pandas as pd
 from ultralytics import YOLO
@@ -48,16 +48,16 @@ level_inverse_mapping = {
 }
 
 # ---------------------------
-# Define the Request Body using Pydantic for Prediction
+# Define the Request Body using Pydantic for Prediction with Validation
 # ---------------------------
 class PredictionRequest(BaseModel):
-    Age: int
-    Gender: str             # e.g., "Female" or "Male"
-    Current_Mood: str       # e.g., "Happy", "Neutral", etc.
-    Parent_Satisfaction: int
-    Engagement_Level: int
-    Completed_Tasks: int
-    Time_Spent: float
+    Age: int 
+    Gender: str             
+    Current_Mood: str       
+    Parent_Satisfaction: int 
+    Engagement_Level: int  
+    Completed_Tasks: int           
+    Time_Spent: float             
     Correct_in_First_Attempt: int
 
 # ---------------------------
@@ -70,9 +70,46 @@ def predict(request: PredictionRequest):
 
         # Validate categorical inputs
         if input_data["Gender"] not in gender_mapping:
-            raise HTTPException(status_code=400, detail="Invalid Gender value.")
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Gender value", "valid_values": list(gender_mapping.keys())}
+            )
         if input_data["Current_Mood"] not in current_mood_mapping:
-            raise HTTPException(status_code=400, detail="Invalid Current_Mood value.")
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Current_Mood value", "valid_values": list(current_mood_mapping.keys())}
+            )
+        
+        # Additional validations for numerical inputs
+        if not (1 <= input_data["Parent_Satisfaction"] <= 5):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Parent_Satisfaction value", "valid_range": "1 to 5"}
+            )
+        
+        if not (1 <= input_data["Engagement_Level"] <= 5):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Engagement_Level value", "valid_range": "1 to 5"}
+            )
+        
+        if not (1 <= input_data["Completed_Tasks"] <= 10):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Completed_Tasks value", "valid_range": "1 to 10"}
+            )
+        
+        if not (6 <= input_data["Age"] <= 10):
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Age value", "valid_range": "6 to 10"}
+            )
+        
+        if input_data["Time_Spent"] <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "Invalid Time_Spent value", "valid_value": "greater than 0"}
+            )
 
         # Create a DataFrame from input data with proper mappings
         df = pd.DataFrame([{

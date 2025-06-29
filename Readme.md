@@ -36,7 +36,7 @@ Ensure that the following are installed on your machine:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Avishka777/RP-AUTISM-BEHAVIOUR
+   git clone https://github.com/Sudarika/RP-AUTISM-BEHAVIOUR
 
 2. **Run the models:**
     ```bash
@@ -59,6 +59,27 @@ Ensure that the following are installed on your machine:
 5. **Run the server:**
     ```bash
     - npm start
+
+## API Endpoints
+
+### User Authentication
+
+- POST /auth/register: Register a new user.
+- POST /auth/login: Login for an existing user.
+- GET /auth/user: Get user details.
+- PUT /auth/update: Update user profile.
+- DELETE /auth/delete: Delete user profile.
+
+###  Learning Sessions
+
+- POST /sessions: Create a new learning session.
+- PUT /sessions/instructions/:id: Add instructions to a learning session.
+- PUT /sessions/finish/:id: Mark a learning session as finished.
+- GET /sessions/:id: Get details of a specific learning session.
+- POST /sessions/detect-objects: Upload a photo and detect objects.
+
+### Object Detection (via YOLOv8)
+- POST /detect-objects: Upload an image and get detected objects using the YOLOv8 model.
 
 ## Contributing
 
