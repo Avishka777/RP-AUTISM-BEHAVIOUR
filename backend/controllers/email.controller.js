@@ -13,15 +13,15 @@ async function generatePDF(
   isCorrectChartBuffer
 ) {
   return new Promise((resolve, reject) => {
-    // Create a new PDF document with margins
     const doc = new PDFDocument({ margin: 50 });
 
-    // Register a custom Sinhala font if available.
-    // Ensure you have placed the font file (e.g., NotoSansSinhala-Regular.ttf) in the ../fonts folder.
+    // Font registration (keep your existing font setup)
     const sinhalaFontPath = path.join(
       __dirname,
       "../Noto_Sans_Sinhala/NotoSansSinhala-VariableFont_wdth,wght.ttf"
     );
+    console.log(sinhalaFontPath)
+
     if (fs.existsSync(sinhalaFontPath)) {
       doc.registerFont("Sinhala", sinhalaFontPath);
       doc.font("Sinhala");
@@ -85,14 +85,72 @@ async function generatePDF(
       .fillColor("gray")
       .text(`Selected Location: ${session.selectedLocation}`)
       .text(`Detected Objects: ${session.detectedObjects}`)
-      .text(
-        `Current Mood (Emotions When Doing Activity): ${session.currentMood}`
-      )
       .text(`Parent Satisfaction: ${session.parentSatisfaction}`)
       .text(`Engagement Level: ${session.engagementLevel}`)
       .text(`Completed Tasks: ${session.completedTasks}`)
       .text(`Correct in First Attempt: ${session.correctInFirstAttempt}`)
       .text(`Prediction: ${session.prediction}`);
+    doc.moveDown();
+
+    // --- Emotion Analysis Section ---
+    doc
+      .fontSize(16)
+      .fillColor("blue")
+      .text("Emotion Analysis", { underline: true });
+    doc.moveDown();
+
+    if (session.emotionSnapshots.length > 0) {
+      // Sort snapshots by type (Initial, Middle, Final)
+      const sortedSnapshots = session.emotionSnapshots.sort((a, b) => {
+        const order = { Initial: 0, Middle: 1, Final: 2 };
+        return order[a.emotion_type] - order[b.emotion_type];
+      });
+
+      sortedSnapshots.forEach((snapshot) => {
+        doc
+          .fontSize(14)
+          .fillColor("darkblue")
+          .text(`${snapshot.emotion_type} State:`);
+
+        doc
+          .fontSize(12)
+          .fillColor("gray")
+          .text(`Dominant Emotion: ${snapshot.dominant_emotion}`)
+          .text(`Timestamp: ${snapshot.timestamp.toLocaleString()}`);
+
+        // Emotion percentages table
+        doc.moveDown(0.5);
+        doc.font("Helvetica-Bold").text("Emotion Distribution:");
+        doc.font("Helvetica");
+
+        // Create a table for emotion percentages
+        const startX = 50;
+        const startY = doc.y;
+        const rowHeight = 20;
+        const colWidth = 100;
+
+        // Table headers
+        doc.font("Helvetica-Bold");
+        doc.text("Emotion", startX, startY);
+        doc.text("Percentage", startX + colWidth, startY);
+        doc.font("Helvetica");
+
+        // Table rows
+        Object.entries(snapshot.emotion_percentages).forEach(
+          ([emotion, percentage], i) => {
+            const y = startY + (i + 1) * rowHeight;
+            doc.text(emotion, startX, y);
+            doc.text(`${percentage.toFixed(2)}%`, startX + colWidth, y);
+          }
+        );
+
+        doc.moveDown(
+          (Object.keys(snapshot.emotion_percentages).length + 1) * 0.5
+        );
+      });
+    } else {
+      doc.text("No emotion data available for this session");
+    }
     doc.moveDown();
 
     // --- Instruction Records Section ---
