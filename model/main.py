@@ -1,11 +1,17 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import joblib
 import pandas as pd
 from ultralytics import YOLO
 from PIL import Image
 import io
 import uvicorn
+import numpy as np
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import img_to_array
+import cv2
+import tempfile
+from typing import List
 
 # ---------------------------
 # Create FastAPI Instance
@@ -13,10 +19,16 @@ import uvicorn
 app = FastAPI()
 
 # ---------------------------
-# Load the Saved Autism Behavior Model
+# Load Models
 # ---------------------------
-# Ensure the file 'autism_behavior_model.pkl' is in the same directory as this script.
 autism_model = joblib.load("autism_behavior_model.pkl")
+yolo_model = YOLO("yolov8n.pt")
+emotion_model = load_model("best_emotion_model.h5")
+
+# ---------------------------
+# Emotion Class Mapping
+# ---------------------------
+emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 # ---------------------------
 # Define Mappings for Categorical Features
@@ -48,16 +60,16 @@ level_inverse_mapping = {
 }
 
 # ---------------------------
-# Define the Request Body using Pydantic for Prediction with Validation
+# Prediction Request Model
 # ---------------------------
 class PredictionRequest(BaseModel):
     Age: int 
-    Gender: str             
-    Current_Mood: str       
-    Parent_Satisfaction: int 
-    Engagement_Level: int  
-    Completed_Tasks: int           
-    Time_Spent: float             
+    Gender: str
+    Current_Mood: str
+    Parent_Satisfaction: int
+    Engagement_Level: int
+    Completed_Tasks: int
+    Time_Spent: float
     Correct_in_First_Attempt: int
 
 # ---------------------------
@@ -200,7 +212,106 @@ async def detect_objects(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ---------------------------
-# Run the Application
+# Emotion Detection Endpoint
+# ---------------------------
+@app.post("/detect_emotion/")
+async def detect_emotion(file: UploadFile = File(...)):
+    try:
+        image_bytes = await file.read()
+        image = Image.open(io.BytesIO(image_bytes)).convert("L").resize((48, 48))
+
+        img_array = img_to_array(image) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)  # Shape: (1, 48, 48, 1)
+
+        prediction = emotion_model.predict(img_array)
+        predicted_index = int(np.argmax(prediction))
+        predicted_emotion = emotion_labels[predicted_index]
+        confidence = float(np.max(prediction))
+
+        return {"emotion": predicted_emotion, "confidence": confidence}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+@app.post("/detect_emotion_video/")
+async def detect_emotion_video(file: UploadFile = File(...)):
+    try:
+        # Validate file is a video
+        if not file.content_type.startswith('video/'):
+            raise HTTPException(400, "File must be a video")
+
+        # Save uploaded video to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
+            content = await file.read()
+            temp_video.write(content)
+            temp_video_path = temp_video.name
+
+        # Process video frames
+        cap = cv2.VideoCapture(temp_video_path)
+        emotions = []
+        frame_count = 0
+        max_frames = 100  # Limit frames to process for performance
+
+        while cap.isOpened() and frame_count < max_frames:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Process every nth frame (e.g., every 5th frame)
+            if frame_count % 5 == 0:
+                # Convert frame to PIL Image
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                pil_image = Image.fromarray(frame_rgb)
+
+                # Convert to grayscale and resize
+                gray_image = pil_image.convert("L").resize((48, 48))
+                img_array = img_to_array(gray_image) / 255.0
+                img_array = np.expand_dims(img_array, axis=0)
+
+                # Predict emotion
+                prediction = emotion_model.predict(img_array)
+                predicted_index = int(np.argmax(prediction))
+                predicted_emotion = emotion_labels[predicted_index]
+                confidence = float(np.max(prediction))
+
+                emotions.append({
+                    "frame": frame_count,
+                    "emotion": predicted_emotion,
+                    "confidence": confidence
+                })
+
+            frame_count += 1
+
+        cap.release()
+        
+        # Calculate emotion statistics
+        emotion_stats = {}
+        for e in emotion_labels:
+            count = sum(1 for x in emotions if x["emotion"] == e)
+            emotion_stats[e] = {
+                "count": count,
+                "percentage": (count / len(emotions)) * 100 if emotions else 0
+            }
+
+        # Get dominant emotion (emotion with highest percentage)
+        dominant_emotion = max(emotion_stats.items(), key=lambda x: x[1]["percentage"])[0] if emotions else None
+
+        return {
+            "frame_analysis": emotions,
+            "statistics": emotion_stats,
+            "dominant_emotion": dominant_emotion,
+            "total_frames_processed": len(emotions)
+        }
+
+    except Exception as e:
+        raise HTTPException(500, str(e))
+    finally:
+        # Clean up temporary file
+        if 'temp_video_path' in locals():
+            import os
+            os.unlink(temp_video_path)
+
+# ---------------------------
+# Run Server (for local testing)
 # ---------------------------
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
