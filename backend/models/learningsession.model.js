@@ -19,7 +19,7 @@ const emotionSnapshotSchema = new Schema(
     },
     dominant_emotion: {
       type: String,
-      enum: ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"],
+      enum: ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral","Frustrated"],
       default: null,
     },
     timestamp: {

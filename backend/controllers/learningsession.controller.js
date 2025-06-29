@@ -26,17 +26,20 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-const videoUpload = multer({ 
+const videoUpload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === 'video' && file.mimetype.startsWith('video/')) {
+    if (file.fieldname === "video" && file.mimetype.startsWith("video/")) {
       cb(null, true);
     } else {
-      cb(new Error('Only video files are allowed for emotion detection!'), false);
+      cb(
+        new Error("Only video files are allowed for emotion detection!"),
+        false
+      );
     }
   },
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB max
-}).single('video');
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
+}).single("video");
 
 // Handle file upload and object detection
 exports.uploadPhotoAndDetect = [
@@ -121,7 +124,7 @@ exports.createLearningSession = async (req, res) => {
   }
 };
 
-// Add emotion snapshot to learning session
+// Get Emotions
 exports.addEmotionSnapshot = [
   (req, res, next) => {
     videoUpload(req, res, (err) => {
@@ -245,12 +248,7 @@ exports.addLearningInstruction = async (req, res) => {
 exports.finishLearningSession = async (req, res) => {
   try {
     const sessionId = req.params.id;
-    const {
-      finishedSession,
-      currentMood,
-      parentSatisfaction,
-      engagementLevel,
-    } = req.body;
+    const { finishedSession, parentSatisfaction, engagementLevel } = req.body;
 
     // Fetch the learning session
     let session = await LearningSession.findById(sessionId);
@@ -263,9 +261,19 @@ exports.finishLearningSession = async (req, res) => {
       });
     }
 
+    // Get the last emotion snapshot's dominant emotion as currentMood
+    let currentMood = null;
+    if (session.emotionSnapshots.length > 0) {
+      // Sort snapshots by timestamp in descending order to get the most recent
+      const sortedSnapshots = [...session.emotionSnapshots].sort(
+        (a, b) => b.timestamp - a.timestamp
+      );
+      currentMood = sortedSnapshots[0].dominant_emotion;
+    }
+
     // Update session details
     session.finishedSession = true;
-    session.currentMood = currentMood;
+    session.currentMood = currentMood; // Set from emotion snapshot
     session.parentSatisfaction = parentSatisfaction;
     session.engagementLevel = engagementLevel;
 
@@ -299,7 +307,7 @@ exports.finishLearningSession = async (req, res) => {
     const predictPayload = {
       Age: user.age || 0,
       Gender: user.gender || "",
-      Current_Mood: currentMood,
+      Current_Mood: currentMood || "Neutral", 
       Parent_Satisfaction: parentSatisfaction,
       Engagement_Level: engagementLevel,
       Completed_Tasks: completedTasks,
