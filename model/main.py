@@ -21,9 +21,9 @@ app = FastAPI()
 # ---------------------------
 # Load Models
 # ---------------------------
-autism_model = joblib.load("autism_behavior_model.pkl")
-yolo_model = YOLO("yolov8n.pt")
-emotion_model = load_model("best_emotion_model.h5")
+autism_model = joblib.load("models/autism_behavior_model.pkl")
+yolo_model = YOLO("models/yolov8n.pt")
+emotion_model = load_model("models/best_emotion_model.h5")
 
 # ---------------------------
 # Emotion Class Mapping
