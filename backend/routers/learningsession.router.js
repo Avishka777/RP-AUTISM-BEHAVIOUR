@@ -6,6 +6,12 @@ const learningSessionController = require("../controllers/learningsession.contro
 // Create a new learning session
 router.post("/", authenticateUser, learningSessionController.createLearningSession);
 
+// Get User All Learning Sessions
+router.get("/", authenticateUser, learningSessionController.getUserLearningSessions);
+
+// Route for uploading photo and getting detected objects
+router.post("/detect-objects", authenticateUser, learningSessionController.uploadPhotoAndDetect);
+
 // Add emotion snapshot to session
 router.post("/emotion/:id", authenticateUser, learningSessionController.addEmotionSnapshot);
 
@@ -18,7 +24,6 @@ router.put("/finish/:id", authenticateUser, learningSessionController.finishLear
 // Get a single learning session by ID (with all details)
 router.get("/:id", authenticateUser, learningSessionController.getLearningSession);
 
-// Route for uploading photo and getting detected objects
-router.post("/detect-objects", authenticateUser, learningSessionController.uploadPhotoAndDetect);
+
 
 module.exports = router;

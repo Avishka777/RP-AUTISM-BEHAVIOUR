@@ -9,17 +9,47 @@ const emotionSnapshotSchema = new Schema(
       required: true,
     },
     emotion_percentages: {
-      Angry: { type: Number, default: 0 },
-      Disgust: { type: Number, default: 0 },
-      Fear: { type: Number, default: 0 },
-      Happy: { type: Number, default: 0 },
-      Sad: { type: Number, default: 0 },
-      Surprise: { type: Number, default: 0 },
-      Neutral: { type: Number, default: 0 },
+      Angry: { 
+        type: Number, 
+        default: 0 
+      },
+      Disgust: { 
+        type: Number, 
+        default: 0 
+      },
+      Fear: { 
+        type: Number, 
+        default: 0 
+      },
+      Happy: { 
+        type: Number, 
+        default: 0 
+      },
+      Sad: { 
+        type: Number, 
+        default: 0 
+      },
+      Surprise: { 
+        type: Number, 
+        default: 0 
+      },
+      Neutral: { 
+        type: Number, 
+        default: 0 
+      },
     },
     dominant_emotion: {
       type: String,
-      enum: ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral","Frustrated"],
+      enum: [
+        "Angry",
+        "Disgust",
+        "Fear",
+        "Happy",
+        "Sad",
+        "Surprise",
+        "Neutral",
+        "Frustrated",
+      ],
       default: null,
     },
     timestamp: {
@@ -89,10 +119,6 @@ const LearningSessionSchema = new Schema({
   finishedSession: {
     type: Boolean,
     default: false,
-  },
-  currentMood: {
-    type: String,
-    default: null,
   },
   parentSatisfaction: {
     type: Number,

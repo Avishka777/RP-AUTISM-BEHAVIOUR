@@ -361,6 +361,28 @@ exports.finishLearningSession = async (req, res) => {
   }
 };
 
+// Get User All Learning Sessions
+exports.getUserLearningSessions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const sessions = await LearningSession.find({ user: userId }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: "User's learning sessions retrieved successfully",
+      data: sessions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      data: { error: error.message },
+    });
+  }
+};
+
+
 // Get a single learning session by its ID
 exports.getLearningSession = async (req, res) => {
   try {
