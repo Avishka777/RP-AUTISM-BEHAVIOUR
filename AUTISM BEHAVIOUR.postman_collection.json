@@ -10,13 +10,13 @@
 			"name": "User",
 			"item": [
 				{
-					"name": "Create User",
+					"name": "Register User",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"fullName\":\"Sudarika Chethani\",\r\n  \"email\": \"sudarika@gmail.com\",\r\n  \"password\": \"sudarika\",\r\n  \"age\":10,\r\n  \"gender\":\"Female\"\r\n}\r\n",
+							"raw": "{\r\n  \"fullName\":\"Avishka Rathnakumara\",\r\n  \"email\": \"avishka@gmail.com\",\r\n  \"password\": \"avishka\",\r\n  \"age\":10,\r\n  \"gender\":\"Male\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -46,7 +46,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"email\": \"sudarika@gmail.com\",\r\n  \"password\": \"sudarika\"\r\n}\r\n",
+							"raw": "{\r\n  \"email\": \"avishka@gmail.com\",\r\n  \"password\": \"avishka\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -64,6 +64,129 @@
 								"api",
 								"users",
 								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Details",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/api/users/my",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"users",
+								"my"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"fullName\":\"Avishka up\",\r\n  \"email\": \"avishkaup@gmail.com\",\r\n  \"password\": \"avishka\",\r\n  \"age\":10,\r\n  \"gender\":\"Male\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/api/users/update",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"users",
+								"update"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/api/users/delete",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"users",
+								"delete"
 							]
 						}
 					},
@@ -91,7 +214,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"selectedLocation\": \"Playground\",\r\n  \"detectedObjects\": \"Chair, Table, Menu\"\r\n}\r\n",
+							"raw": "{\r\n  \"selectedLocation\": \"New Playground\",\r\n  \"detectedObjects\": \"Chair, Table, Menu\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -134,7 +257,7 @@
 								{
 									"key": "photo",
 									"type": "file",
-									"src": "/C:/Users/avish/Downloads/default_name.png"
+									"src": "/C:/Users/avish/OneDrive/Pictures/Screenshots 1/Screenshot (232).png"
 								}
 							]
 						},
@@ -149,6 +272,53 @@
 								"api",
 								"learning",
 								"detect-objects"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Emotions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "emotionType",
+									"value": "Initial",
+									"type": "text"
+								},
+								{
+									"key": "video",
+									"type": "file",
+									"src": "/C:/Users/avish/Downloads/7123973-uhd_4096_2160_30fps.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5000/api/learning/emotion/6873cea147ff0604d487f7ad",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"learning",
+								"emotion",
+								"6873cea147ff0604d487f7ad"
 							]
 						}
 					},
@@ -171,7 +341,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"instructioId\": 10,\r\n    \"quesition\": \"අශ්වයා පැනනගින්නේ කෙසේද?\",\r\n    \"correctAnswer\": \"දඩියලි\",\r\n    \"wrongAnswer\": \"පිඹිම\",\r\n    \"selectedAnswer\": \"දඩියලි\",\r\n    \"isCorrect\": true,\r\n    \"takenTime\": 12\r\n}",
+							"raw": "{\r\n    \"instructioId\": 4,\r\n    \"quesition\": \"අශ්වයා පැනනගින්නේ කෙසේද?\",\r\n    \"correctAnswer\": \"දඩියලි\",\r\n    \"wrongAnswer\": \"පිඹිම\",\r\n    \"selectedAnswer\": \"දඩියලි\",\r\n    \"isCorrect\": false,\r\n    \"takenTime\": 24\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -179,7 +349,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/instructions/67ea2e1a315965423b6ce069",
+							"raw": "http://localhost:5000/api/learning/instructions/6873cea147ff0604d487f7ad",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -189,7 +359,7 @@
 								"api",
 								"learning",
 								"instructions",
-								"67ea2e1a315965423b6ce069"
+								"6873cea147ff0604d487f7ad"
 							]
 						}
 					},
@@ -212,7 +382,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"finishedSession\": true,\r\n  \"currentMood\": \"Happy\",\r\n  \"parentSatisfaction\": 5,\r\n  \"engagementLevel\": 4\r\n}\r\n",
+							"raw": "{\r\n  \"finishedSession\": true,\r\n  \"parentSatisfaction\": 5,\r\n  \"engagementLevel\": 4\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -220,7 +390,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/finish/67e9113235f03d43b890d3a8",
+							"raw": "http://localhost:5000/api/learning/finish/6873cea147ff0604d487f7ad",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -230,14 +400,14 @@
 								"api",
 								"learning",
 								"finish",
-								"67e9113235f03d43b890d3a8"
+								"6873cea147ff0604d487f7ad"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Fetch Learning Session",
+					"name": "Fetch Learning Session By ID",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -256,7 +426,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"finishedSession\": true,\r\n  \"currentMood\": \"Happy\",\r\n  \"parentSatisfaction\": 5,\r\n  \"engagementLevel\": 4\r\n}\r\n",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -264,7 +434,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/67e83b1b2795f074f89ac2af",
+							"raw": "http://localhost:5000/api/learning/6873cea147ff0604d487f7ad",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -273,7 +443,49 @@
 							"path": [
 								"api",
 								"learning",
-								"67e83b1b2795f074f89ac2af"
+								"6873cea147ff0604d487f7ad"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch User All Learning Sessions",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/api/learning",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"learning"
 							]
 						}
 					},
@@ -301,7 +513,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"sessionId\": \"67e8a7cb50bc82cccb805be5\",\r\n  \"email\": \"avsudari@gmail.com\"\r\n}\r\n",
+							"raw": "{\r\n  \"sessionId\": \"6873cea147ff0604d487f7ad\",\r\n  \"email\": \"avishkarathnakumara@gmail.com\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
