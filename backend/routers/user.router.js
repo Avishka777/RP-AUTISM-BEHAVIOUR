@@ -10,7 +10,7 @@ router.post("/register", userController.register);
 router.post("/login", userController.login);
 
 // Get user details 
-router.get("/", authenticateUser, userController.getUserDetails);
+router.get("/my", authenticateUser, userController.getUserDetails);
 
 // Update user profile 
 router.put("/update", authenticateUser, userController.updateProfile);
