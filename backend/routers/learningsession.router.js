@@ -18,6 +18,9 @@ router.post("/emotion/:id", authenticateUser, learningSessionController.addEmoti
 // Append a new learning instruction
 router.put("/instructions/:id",authenticateUser,learningSessionController.addLearningInstruction);
 
+// Add Parent Satisfaction
+router.put("/parent-satisfaction/:id",authenticateUser,learningSessionController.addParentSatisfaction);
+
 // Finish the learning session 
 router.put("/finish/:id", authenticateUser, learningSessionController.finishLearningSession);
 

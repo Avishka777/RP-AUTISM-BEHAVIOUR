@@ -244,17 +244,62 @@ exports.addLearningInstruction = async (req, res) => {
   }
 };
 
+// Add parent satisfaction score and update average
+exports.addParentSatisfaction = async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const { satisfaction } = req.body;
+
+    if (
+      typeof satisfaction !== "number" ||
+      satisfaction < 1 ||
+      satisfaction > 5
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Satisfaction must be a number between 1 and 5" });
+    }
+
+    const session = await LearningSession.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Learning session not found" });
+    }
+
+    // Add new satisfaction value
+    session.parentSatisfactionHistory.push(satisfaction);
+
+    // Calculate average
+    const total = session.parentSatisfactionHistory.reduce(
+      (sum, val) => sum + val,
+      0
+    );
+    session.parentSatisfaction = parseFloat(
+      (total / session.parentSatisfactionHistory.length).toFixed(1)
+    );
+
+    await session.save();
+    res.status(200).json({
+      message: "Parent satisfaction added successfully",
+      parentSatisfaction: session.parentSatisfaction,
+      parentSatisfactionHistory: session.parentSatisfactionHistory,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Finish the learning session and get the prediction
 exports.finishLearningSession = async (req, res) => {
   try {
     const sessionId = req.params.id;
-    const { finishedSession, parentSatisfaction, engagementLevel } = req.body;
+    const { finishedSession, engagementLevel } = req.body;
 
     // Fetch the learning session
     let session = await LearningSession.findById(sessionId);
     if (!session) {
       return res.status(404).json({ message: "Learning session not found" });
     }
+
     if (finishedSession !== true) {
       return res.status(400).json({
         message: "finishedSession flag must be true to complete the session",
@@ -266,18 +311,35 @@ exports.finishLearningSession = async (req, res) => {
     if (session.emotionSnapshots.length > 0) {
       // Sort snapshots by timestamp in descending order to get the most recent
       const sortedSnapshots = [...session.emotionSnapshots].sort(
-        (a, b) => b.timestamp - a.timestamp
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
       );
       currentMood = sortedSnapshots[0].dominant_emotion;
     }
 
-    // Update session details
+    // Calculate parent satisfaction from saved history
+    let parentSatisfaction = null;
+    if (
+      session.parentSatisfactionHistory &&
+      session.parentSatisfactionHistory.length > 0
+    ) {
+      const totalSatisfaction = session.parentSatisfactionHistory.reduce(
+        (sum, val) => sum + val,
+        0
+      );
+      parentSatisfaction = parseFloat(
+        (totalSatisfaction / session.parentSatisfactionHistory.length).toFixed(
+          1
+        )
+      );
+      session.parentSatisfaction = parentSatisfaction;
+    }
+
+    // Update session fields
     session.finishedSession = true;
-    session.currentMood = currentMood; // Set from emotion snapshot
-    session.parentSatisfaction = parentSatisfaction;
+    session.currentMood = currentMood;
     session.engagementLevel = engagementLevel;
 
-    // Calculate total takenTime and average takenTime
+    // Calculate total and average time taken
     const totalTime = session.InstructinRecords.reduce(
       (acc, record) => acc + record.takenTime,
       0
@@ -287,28 +349,27 @@ exports.finishLearningSession = async (req, res) => {
         ? totalTime / session.InstructinRecords.length
         : 0;
 
-    // Calculate completed tasks and count of correct answers on first attempt
+    // Count completed tasks and correct answers on first attempt
     const completedTasks = session.InstructinRecords.length;
     const correctInFirstAttempt = session.InstructinRecords.filter(
       (record) => record.isCorrect === true
     ).length;
 
-    // Update the session fields for tasks and correct attempts
     session.completedTasks = completedTasks;
     session.correctInFirstAttempt = correctInFirstAttempt;
 
-    // Get user details (Age and Gender) from the User model
+    // Get user info for prediction
     const user = await User.findById(session.user);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Construct the payload for the prediction API
+    // Prepare payload for prediction API
     const predictPayload = {
       Age: user.age || 0,
       Gender: user.gender || "",
-      Current_Mood: currentMood || "Neutral", 
-      Parent_Satisfaction: parentSatisfaction,
+      Current_Mood: currentMood || "Neutral",
+      Parent_Satisfaction: parentSatisfaction || 0,
       Engagement_Level: engagementLevel,
       Completed_Tasks: completedTasks,
       Time_Spent: totalTime,
@@ -317,8 +378,10 @@ exports.finishLearningSession = async (req, res) => {
 
     console.log("Prediction Payload: ", predictPayload);
 
-    // Call the prediction API
-    let prediction, suggestions;
+    // Call prediction API
+    let prediction = null;
+    let suggestions = [];
+
     try {
       const predictResponse = await axios.post(
         `${process.env.FLASH_BACKEND}/predict`,
@@ -341,9 +404,10 @@ exports.finishLearningSession = async (req, res) => {
       });
     }
 
-    // Save the session with updated values, prediction, and suggestions
+    // Save updated session
     await session.save();
 
+    // Send response
     res.status(200).json({
       session,
       totalTime,
@@ -366,7 +430,9 @@ exports.getUserLearningSessions = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const sessions = await LearningSession.find({ user: userId }).sort({ createdAt: -1 });
+    const sessions = await LearningSession.find({ user: userId }).sort({
+      createdAt: -1,
+    });
 
     return res.status(200).json({
       success: true,
@@ -381,7 +447,6 @@ exports.getUserLearningSessions = async (req, res) => {
     });
   }
 };
-
 
 // Get a single learning session by its ID
 exports.getLearningSession = async (req, res) => {

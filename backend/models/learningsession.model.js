@@ -9,33 +9,33 @@ const emotionSnapshotSchema = new Schema(
       required: true,
     },
     emotion_percentages: {
-      Angry: { 
-        type: Number, 
-        default: 0 
+      Angry: {
+        type: Number,
+        default: 0,
       },
-      Disgust: { 
-        type: Number, 
-        default: 0 
+      Disgust: {
+        type: Number,
+        default: 0,
       },
-      Fear: { 
-        type: Number, 
-        default: 0 
+      Fear: {
+        type: Number,
+        default: 0,
       },
-      Happy: { 
-        type: Number, 
-        default: 0 
+      Happy: {
+        type: Number,
+        default: 0,
       },
-      Sad: { 
-        type: Number, 
-        default: 0 
+      Sad: {
+        type: Number,
+        default: 0,
       },
-      Surprise: { 
-        type: Number, 
-        default: 0 
+      Surprise: {
+        type: Number,
+        default: 0,
       },
-      Neutral: { 
-        type: Number, 
-        default: 0 
+      Neutral: {
+        type: Number,
+        default: 0,
       },
     },
     dominant_emotion: {
@@ -120,8 +120,12 @@ const LearningSessionSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  parentSatisfactionHistory: {
+    type: [Number], 
+    default: [],
+  },
   parentSatisfaction: {
-    type: Number,
+    type: Number, 
     default: null,
   },
   engagementLevel: {
