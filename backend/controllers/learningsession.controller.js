@@ -292,7 +292,7 @@ exports.addParentSatisfaction = async (req, res) => {
 exports.finishLearningSession = async (req, res) => {
   try {
     const sessionId = req.params.id;
-    const { finishedSession, engagementLevel } = req.body;
+    const { finishedSession } = req.body;
 
     // Fetch the learning session
     let session = await LearningSession.findById(sessionId);
@@ -309,7 +309,6 @@ exports.finishLearningSession = async (req, res) => {
     // Get the last emotion snapshot's dominant emotion as currentMood
     let currentMood = null;
     if (session.emotionSnapshots.length > 0) {
-      // Sort snapshots by timestamp in descending order to get the most recent
       const sortedSnapshots = [...session.emotionSnapshots].sort(
         (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
       );
@@ -326,18 +325,11 @@ exports.finishLearningSession = async (req, res) => {
         (sum, val) => sum + val,
         0
       );
-      parentSatisfaction = parseFloat(
-        (totalSatisfaction / session.parentSatisfactionHistory.length).toFixed(
-          1
-        )
+      parentSatisfaction = Math.round(
+        totalSatisfaction / session.parentSatisfactionHistory.length
       );
       session.parentSatisfaction = parentSatisfaction;
     }
-
-    // Update session fields
-    session.finishedSession = true;
-    session.currentMood = currentMood;
-    session.engagementLevel = engagementLevel;
 
     // Calculate total and average time taken
     const totalTime = session.InstructinRecords.reduce(
@@ -349,6 +341,10 @@ exports.finishLearningSession = async (req, res) => {
         ? totalTime / session.InstructinRecords.length
         : 0;
 
+    // Round averageTime to nearest integer for engagementLevel
+    const engagementLevel = Math.round(averageTime);
+    session.engagementLevel = engagementLevel;
+
     // Count completed tasks and correct answers on first attempt
     const completedTasks = session.InstructinRecords.length;
     const correctInFirstAttempt = session.InstructinRecords.filter(
@@ -357,6 +353,8 @@ exports.finishLearningSession = async (req, res) => {
 
     session.completedTasks = completedTasks;
     session.correctInFirstAttempt = correctInFirstAttempt;
+    session.finishedSession = true;
+    session.currentMood = currentMood;
 
     // Get user info for prediction
     const user = await User.findById(session.user);
@@ -365,12 +363,15 @@ exports.finishLearningSession = async (req, res) => {
     }
 
     // Prepare payload for prediction API
+    const genderValue =
+      user.gender === "Male" ? "0" : user.gender === "Female" ? "1" : "";
+
     const predictPayload = {
       Age: user.age || 0,
-      Gender: user.gender || "",
+      Gender: genderValue,
       Current_Mood: currentMood || "Neutral",
-      Parent_Satisfaction: parentSatisfaction || 0,
-      Engagement_Level: engagementLevel,
+      Parent_Satisfaction: parentSatisfaction || 0, // Now an integer
+      Engagement_Level: engagementLevel, // Now an integer
       Completed_Tasks: completedTasks,
       Time_Spent: totalTime,
       Correct_in_First_Attempt: correctInFirstAttempt,

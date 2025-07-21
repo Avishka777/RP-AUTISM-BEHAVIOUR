@@ -257,7 +257,7 @@
 								{
 									"key": "photo",
 									"type": "file",
-									"src": "/C:/Users/avish/OneDrive/Pictures/Screenshots 1/Screenshot (232).png"
+									"src": "/C:/Users/avish/Downloads/Projects UI/Virtual Dressing Room/Screenshot (19) 2.png"
 								}
 							]
 						},
@@ -303,12 +303,12 @@
 								{
 									"key": "video",
 									"type": "file",
-									"src": "/C:/Users/avish/Downloads/7123973-uhd_4096_2160_30fps.mp4"
+									"src": "/C:/Users/avish/Downloads/Tempory Data/Autism Behaviour/Sample 1.mp4"
 								}
 							]
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/emotion/6873cea147ff0604d487f7ad",
+							"raw": "http://localhost:5000/api/learning/emotion/687dd6af6f4e7ddefe6731b9",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -318,7 +318,7 @@
 								"api",
 								"learning",
 								"emotion",
-								"6873cea147ff0604d487f7ad"
+								"687dd6af6f4e7ddefe6731b9"
 							]
 						}
 					},
@@ -341,7 +341,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"instructioId\": 4,\r\n    \"quesition\": \"අශ්වයා පැනනගින්නේ කෙසේද?\",\r\n    \"correctAnswer\": \"දඩියලි\",\r\n    \"wrongAnswer\": \"පිඹිම\",\r\n    \"selectedAnswer\": \"දඩියලි\",\r\n    \"isCorrect\": false,\r\n    \"takenTime\": 24\r\n}",
+							"raw": "{\r\n    \"instructioId\": 4,\r\n    \"quesition\": \"අශ්වයා පැනනගින්නේ කෙසේද?\",\r\n    \"correctAnswer\": \"දඩියලි\",\r\n    \"wrongAnswer\": \"පිඹිම\",\r\n    \"selectedAnswer\": \"දඩියලි\",\r\n    \"isCorrect\": true,\r\n    \"takenTime\": 124\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -349,7 +349,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/instructions/6873cea147ff0604d487f7ad",
+							"raw": "http://localhost:5000/api/learning/instructions/687dd6af6f4e7ddefe6731b9",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -359,7 +359,48 @@
 								"api",
 								"learning",
 								"instructions",
-								"6873cea147ff0604d487f7ad"
+								"687dd6af6f4e7ddefe6731b9"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Parent Satisfaction",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"satisfaction\": 4\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/api/learning/parent-satisfaction/687dd6af6f4e7ddefe6731b9",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"api",
+								"learning",
+								"parent-satisfaction",
+								"687dd6af6f4e7ddefe6731b9"
 							]
 						}
 					},
@@ -382,7 +423,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"finishedSession\": true,\r\n  \"parentSatisfaction\": 5,\r\n  \"engagementLevel\": 4\r\n}\r\n",
+							"raw": "{\r\n  \"finishedSession\": true\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -390,7 +431,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/finish/6873cea147ff0604d487f7ad",
+							"raw": "http://localhost:5000/api/learning/finish/687dd6af6f4e7ddefe6731b9",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -400,7 +441,7 @@
 								"api",
 								"learning",
 								"finish",
-								"6873cea147ff0604d487f7ad"
+								"687dd6af6f4e7ddefe6731b9"
 							]
 						}
 					},
@@ -434,7 +475,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/api/learning/6873cea147ff0604d487f7ad",
+							"raw": "http://localhost:5000/api/learning/687dd6af6f4e7ddefe6731b9",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -443,7 +484,7 @@
 							"path": [
 								"api",
 								"learning",
-								"6873cea147ff0604d487f7ad"
+								"687dd6af6f4e7ddefe6731b9"
 							]
 						}
 					},
