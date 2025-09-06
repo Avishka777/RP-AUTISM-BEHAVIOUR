@@ -11,7 +11,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 import cv2
 import tempfile
-from typing import List
+from typing import List, Dict, Optional
 from catboost import CatBoostClassifier
 
 # ---------------------------
@@ -54,15 +54,99 @@ level_inverse_mapping = {i: cls for i, cls in enumerate(encoders["Level"].classe
 # ---------------------------
 # Prediction Request Model
 # ---------------------------
+class ActivityEntry(BaseModel):
+    completed: bool
+    timeSpent: int
+    marks: int
+    parentSatisfaction: Optional[int] = None
+
 class PredictionRequest(BaseModel):
-    Age: int 
-    Gender: str  # Will accept "0" or "1" as strings
+    Age: int
+    Gender: str
     Current_Mood: str
-    Parent_Satisfaction: int
-    Engagement_Level: int
-    Completed_Tasks: int
-    Time_Spent: float
-    Correct_in_First_Attempt: int
+    activities: Dict[str, ActivityEntry]
+
+# ---------------------------
+# Calculation function
+# ---------------------------
+def calc(data: dict) -> dict:
+    """
+    Compute all derived fields for the /predict endpoint.
+    Expects data to contain:
+      - "Age": int
+      - "Gender": str
+      - "Current_Mood": str
+      - "activities": dict of activity_id -> {
+            "completed": bool,
+            "timeSpent": int,
+            "marks": int,
+            "parentSatisfaction": Optional[int]
+        }
+    Returns a dict with the exact inputs your model expects:
+      {
+        "Age": int,
+        "Gender": str,
+        "Current_Mood": str,
+        "Parent_Satisfaction": int,
+        "Engagement_Level": int,
+        "Completed_Tasks": int,
+        "Time_Spent": int,
+        "Correct_in_First_Attempt": int
+      }
+    """
+    
+    activities = data.get("activities", {})
+    total_activities = len(activities)
+
+    # 1) Parent satisfaction: average over activity1, activity2, activity3_5
+    ps_keys = ["activity1", "activity2", "activity3_5"]
+    ps_values = [
+        activities[k].get("parentSatisfaction", 0) for k in ps_keys
+        if k in activities
+    ]
+    # avoid division by zero; assume 3 keys always present
+    avg_parent_satisfaction = round(sum(ps_values) / len(ps_values)) if ps_values else 0
+
+    # 2) Completed tasks and %
+    completed_flags = [act.get("completed", False) for act in activities.values()]
+    completed_count = sum(1 for f in completed_flags if f)
+    completed_pct = (completed_count / total_activities) * 100 if total_activities else 0
+    completed_val = completed_pct / 10 if completed_pct else 0
+
+    # 3) Correct-in-first-attempt tasks and %
+    #    (marks > 0 counts as correct)
+    correct_count = sum(1 for act in activities.values() if act.get("marks", 0) > 0)
+
+    # 4) Total time spent on completed tasks
+    total_time_spent = sum(
+        act.get("timeSpent", 0) for act in activities.values() if act.get("completed", False)
+    )
+
+    # 5) Average time per completed task
+    avg_time = (total_time_spent / completed_count) if completed_count else 0
+
+    # 6) Raw engagement score = average of [avg_time, completed_pct, correct_pct]
+    correct_pct = (correct_count / total_activities) * 100 if total_activities else 0
+    raw_engagement = (avg_time + completed_pct + correct_pct) / 3
+    correct_val = correct_pct / 10 if correct_pct else 0
+
+    # 7) Scale raw_engagement (0–100) into a 1–5 integer range
+    #    (simply dividing by 20, then clamping & rounding to [1,5])
+    engagement_level = int(min(max(raw_engagement / 20, 1), 5))
+
+    x = {
+        "Age": data.get("Age", 0),
+        "Gender": data.get("Gender", ""),
+        "Current_Mood": data.get("Current_Mood", ""),
+        "Parent_Satisfaction": avg_parent_satisfaction,
+        "Engagement_Level": engagement_level,
+        "Completed_Tasks": completed_val,
+        "Time_Spent": total_time_spent,
+        "Correct_in_First_Attempt": correct_val,
+    }
+    
+    print(x)
+    return x
 
 # ---------------------------
 # Prediction Endpoint for Autism Behavior Model
@@ -70,7 +154,14 @@ class PredictionRequest(BaseModel):
 @app.post("/predict")
 def predict(request: PredictionRequest):
     try:
-        input_data = request.dict()
+        raw = request.dict()
+        input_data = calc(raw)  # Use this function to perform calculations
+
+        # Convert string gender to the expected format
+        if input_data["Gender"].lower() in ["male", "m"]:
+            input_data["Gender"] = "0"
+        elif input_data["Gender"].lower() in ["female", "f"]:
+            input_data["Gender"] = "1"
 
         # Validate categorical inputs
         if input_data["Gender"] not in valid_genders:
@@ -79,7 +170,7 @@ def predict(request: PredictionRequest):
                 detail={
                     "error": "Invalid Gender value", 
                     "valid_values": valid_genders,
-                    "note": "Use '0' for Male, '1' for Female"
+                    "note": "Use '0' for Male, '1' for Female or send 'Male'/'Female'"
                 }
             )
         
@@ -174,31 +265,18 @@ def predict(request: PredictionRequest):
 
         suggestions = suggestions_dict.get(pred_label, [])
         
-        # Create probability dictionary
-        probability_dict = {
-            level: float(pred_probabilities[i]) 
-            for i, level in enumerate(encoders["Level"].classes_)
-        }
-        
-        # Include the gender label in the response for clarity
-        gender_label = gender_labels[gender_encoding[input_data["Gender"]]]
-        
+        # Return the response in the expected format
         return {
             "prediction": pred_label,
-            "probabilities": probability_dict,
-            "suggestions": suggestions,
-            "input_gender": {
-                "received_value": input_data["Gender"],
-                "interpreted_as": gender_label
-            }
+            "suggestions": suggestions
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+        
 # ---------------------------
 # Load the YOLOv8 Model for Object Detection
 # ---------------------------
-yolo_model = YOLO("yolov8n.pt")
+yolo_model = YOLO("models/yolov8n.pt")
 
 # ---------------------------
 # Object Detection Endpoint using YOLOv8
@@ -250,10 +328,6 @@ async def detect_emotion(file: UploadFile = File(...)):
 @app.post("/detect_emotion_video/")
 async def detect_emotion_video(file: UploadFile = File(...)):
     try:
-        # Validate file is a video
-        # if not file.content_type.startswith('video/'):
-        #     raise HTTPException(400, "File must be a video")
-
         # Save uploaded video to a temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
             content = await file.read()
