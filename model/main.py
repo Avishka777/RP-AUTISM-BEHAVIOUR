@@ -251,8 +251,8 @@ async def detect_emotion(file: UploadFile = File(...)):
 async def detect_emotion_video(file: UploadFile = File(...)):
     try:
         # Validate file is a video
-        if not file.content_type.startswith('video/'):
-            raise HTTPException(400, "File must be a video")
+        # if not file.content_type.startswith('video/'):
+        #     raise HTTPException(400, "File must be a video")
 
         # Save uploaded video to a temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
