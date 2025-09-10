@@ -184,16 +184,16 @@ def predict(request: PredictionRequest):
             )
         
         # Additional validations for numerical inputs
-        if not (1 <= input_data["Parent_Satisfaction"] <= 5):
-            raise HTTPException(
-                status_code=400,
-                detail={"error": "Invalid Parent_Satisfaction value", "valid_range": "1 to 5"}
-            )
+        # if not (1 <= input_data["Parent_Satisfaction"] <= 5):
+        #     raise HTTPException(
+        #         status_code=400,
+        #         detail={"error": "Invalid Parent_Satisfaction value", "valid_range": "1 to 5"}
+        #     )
         
-        if not (1 <= input_data["Completed_Tasks"] <= 10):
+        if not (1 <= input_data["Completed_Tasks"] <= 15):
             raise HTTPException(
                 status_code=400,
-                detail={"error": "Invalid Completed_Tasks value", "valid_range": "1 to 10"}
+                detail={"error": "Invalid Completed_Tasks value", "valid_range": "1 to 15"}
             )
         
         if not (6 <= input_data["Age"] <= 10):
@@ -232,34 +232,45 @@ def predict(request: PredictionRequest):
         # Define suggestions for each prediction level
         suggestions_dict = {
             "Very Low": [
-                "Increase the engagement level by introducing interactive and stimulating activities.",
-                "Offer shorter, more focused tasks to prevent frustration and increase the chances of success.",
-                "Improve mood by providing more positive reinforcement and recognizing small achievements.",
-                "Enhance parental involvement to boost satisfaction and ensure more consistent support for the child."
+                "අන්තර්ක්‍රියාත්මක සහ උත්තේජක ක්‍රියාකාරකම් හඳුන්වා දීමෙන් අවදාන මට්ටම වැඩි කරන්න.",
+                " සාර්ථකත්වය වැඩි කිරීමට කෙටි, අවධානය යොමු කළ කාර්යයන් ලබා දෙන්න."
+                "දරුවා සතුටින් සිටින මොහොතක පාඩම් සදහා යොමු වන්න"
+                "ධනාත්මක ප්‍රතිචාර වැඩි කරමින් සහ සුළු ජයග්‍රහණයන් හඳුනා ගැනීමෙන් මනෝභාවය වැඩි කරන්න.",
+                "මාපියන්ගේ සහභාගීත්වය වැඩි කරමින් සතුට වැඩි කරනු සහ ළමයාට නිතර සහයෝගය ලැබීම සුරක්ෂිත කරන්න."
+
             ],
             "Low": [
-                "Provide visual aids and rewards to enhance motivation and engagement in tasks.",
-                "Adjust the complexity of tasks based on the child's performance to maintain interest and reduce frustration.",
-                "Offer emotional support by recognizing the child's feelings and providing calming strategies.",
-                "Increase communication with parents to better understand the child's needs and improve task completion."
+                "දෘශ්‍ය උදව් සහ ප්‍රසාද ලබා දීමෙන් උද්යෝගය සහ ඇලීම වැඩි කරන්න."
+                "දරුවාට පාඩම එදිනදා උදාහරන සහිතව නිරතුරුව ආවර්ජනය කරන්න"
+                "ඇලීම තබා ගැනීමට සහ නිරාශාව අඩු කිරීමට ළමයාගේ කාර්ය සාධනය අනුව කාර්යයන්ගේ සංකීර්ණතාව සකසන්න.",
+                "ළමයාගේ හැඟීම් පිළිගනිමින් සහ සන්සුන් වීමට උපකාරී විධාන ලබා දීමෙන් මානසික සහයෝගය ලබා දෙන්න.",
+                "කාර්ය නිම කිරීම සඳහා ළමයාගේ අවශ්‍යතා තේරුම් ගැනීමට සහ වැඩිදියුණු කිරීමට දෙමාපියන් සමඟ සන්නිවේදනය වැඩි කරන්න."
             ],
             "Moderate": [
-                "Introduce challenges that are slightly above the child's current skill level to promote growth and confidence.",
-                "Incorporate teamwork or peer interactions to boost engagement and problem-solving skills.",
-                "Ensure that the child receives timely feedback on performance to encourage further improvement.",
-                "Encourage self-regulation techniques to help manage frustration and maintain focus."
+                "වර්ධනය සහ විශ්වාසය සඳහා ළමයාගේ වර්තමාන කුසලතා මට්ටමට වඩා තරමක් සඔකීර්න හඳුන්වා දෙන්න.",
+                "ඇලීම සහ ගැටළු විසඳීමේ කුසලතා වැඩි කිරීමට කණ්ඩායම් කටයුතු හෝ සමවින්දනය එක් කරන්න.",
+                "වැඩිදියුණු කිරීමට තවත් උනන්දු කිරීම සඳහා ළමයාගේ කාර්ය සාධනය පිළිබඳව කාලෝචිත ප්‍රතිචාර ලබා දෙන්න.",
+                "නිරාශාව පාලනය කරමින් අවධානය තබා ගැනීමට ස්වයං පාලන තාක්‍ෂණ උද්යෝග කරන්න."
+                "එදිනදා ජීවිතයේදී හැසිරීම සම්බන්ද අවස්තාවලදී දරුවාගෙන් ප්‍රශ්න කර පිලිතුරු ලබාගන්න"
+                "හැකි සෑමවිටම හැසිරීම සම්බන්ද හොද පුරුදු නිවස තුල බාවිතා කරන්න"
+
             ],
             "High": [
-                "Provide more complex tasks that challenge the child's current abilities to foster growth and mastery.",
-                "Encourage independent problem-solving and decision-making to build confidence and autonomy.",
-                "Use positive reinforcement to sustain motivation and recognize progress toward mastery.",
-                "Offer opportunities for the child to mentor others, which could enhance leadership and organizational skills."
+                "වර්ධනය සහ දක්ෂතාව වැඩි කිරීමට ළමයාගේ වර්තමාන හැකියාවන් අභියෝගයට ලක් කරන වඩා සංකීර්ණ කාර්යයන් ලබා දෙන්න.",
+                "විශ්වාසය සහ ස්වාධීනභාවය ගොඩනගීමට ස්වාධීන ගැටළු විසඳීම සහ තීරණ ගැනීම උද්යෝග කරන්න.",
+                "ඇලීම පවත්වාගෙන යාමට සහ මනෝභාවය තබා ගැනීමට ධනාත්මක ප්‍රතිචාර භාවිතා කරන්න.",
+                " සංවිධාන කුසලතා වැඩි කිරීමට ළමයාට අනෙකුත් අය ගුරුවරයෙක් ලෙස උපදේශනය කිරීමට අවස්ථා ලබා දෙන්න."
+                "දරුවා අනෙක් ලමුන් සමග මුහු කරමින් ප්‍ර්‍රායෝගික  අත්දැකීම් විදීමට උපකාර කරන්න"
+                "ඔබ දරුවා සමග සම්බන්ද වෙමින් පාඩමට අදාල අවස්තා නිවස තුල ගොඩ නගන්න"
             ],
             "Very High": [
-                "Introduce advanced tasks and projects that allow the child to demonstrate their full capabilities.",
-                "Provide leadership opportunities, such as managing a group task or guiding peers in activities.",
-                "Offer opportunities for skill development in a specialized area (e.g., music, art, or technology) to foster expertise.",
-                "Promote self-reflection and goal-setting to help the child focus on future achievements and career paths."
+                "දරුවාට හැහි සෑම විටම ප්‍රයෝගිකව පරිසරය සකසා දෙන්න"
+                "හැසිරීම සම්බන්ද අපගේ අනෙක් පැවරුම් ලබා ගන්න"
+                "දරුවා සාමන්‍ය දරුවන් සමග මුහු කරන්න උත්සාහ ගන්න"
+                "ළමයාගේ සම්පූර්ණ හැකියාවන් පෙන්වීමට ඉඩ දෙන උසස් කාර්යයන් සහ ව්‍යාපෘති හඳුන්වා දෙන්න.",
+                "කණ්ඩායම් කාර්යය නියෝජනය කිරීම හෝ සහෝදරයන්ට මඟ පෙන්වීම වැනි නේතෘත්ව අවස්ථා ලබා දෙන්න.",
+                "හැකි සෑම විටම දරුවා පොදු ස්තාන වලට රැගෙන යන්න.",
+                "අනාගත සාර්ථකතා සහ රැකියාවන්ට අවධානය යොමු කිරීමට ස්වයං පරිකල්පනය සහ අරමුණු නියම කිරීම උද්යෝග කරන්න."
             ]
         }
 
