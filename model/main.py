@@ -22,6 +22,7 @@ app = FastAPI()
 # ---------------------------
 # Load Models
 # ---------------------------
+
 # Load the CatBoost model
 autism_model = CatBoostClassifier()
 autism_model.load_model("models/autism_behavior_catboost_model.cbm") 
@@ -40,6 +41,7 @@ emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutr
 # ---------------------------
 # Define Mappings for Categorical Features
 # ---------------------------
+
 # Define valid values that the API will accept
 valid_genders = ["0", "1"]  # API accepts "0" or "1" as strings
 valid_moods = list(encoders["Current Mood"].classes_)
