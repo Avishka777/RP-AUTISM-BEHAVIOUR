@@ -30,7 +30,7 @@ autism_model.load_model("models/autism_behavior_catboost_model.cbm")
 encoders = joblib.load("models/autism_behavior_encoders.pkl")  
 
 yolo_model = YOLO("models/yolov8n.pt")
-emotion_model = load_model("models/best_emotion_model.h5")
+emotion_model = load_model("models/facial_expression_model.h5")
 
 # ---------------------------
 # Emotion Class Mapping
